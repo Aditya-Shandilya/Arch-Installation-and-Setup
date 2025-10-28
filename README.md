@@ -29,13 +29,13 @@ The book is organized chronologically based on my learning path:
 
 ## 📚 Reading
 
-The rendered book is available at: [Add your GitHub Pages or publishing link here]
+The rendered book is available at: [Arch-Installation-and-Setup](https://aditya-shandilya.github.io/Arch-Installation-and-Setup/)
 
 Alternatively, clone and build locally:
 ```bash
-git clone https://github.com/yourusername/arch-learning-docs.git
+git clone https://github.com/Aditya-Shandilya/Arch-Installation-and-Setup.git
 cd arch-learning-docs
-quarto preview
+quarto preview . 
 ```
 
 ## ⚠️ Disclaimer
