@@ -1,0 +1,31 @@
+# Welcome
+
+This is a personal documentation of my Arch Linux journey, from installation to daily use. Unlike comprehensive guides or tutorials, this book documents what I learn as I learn it.
+
+## What This Book Is
+
+A living document that grows with my understanding of Arch Linux. Each chapter represents a milestone in learning how Linux works at a fundamental level, starting from manual installation and building up to a fully customized system.
+
+## What This Book Is Not
+
+- A complete reference manual
+- A step-by-step tutorial for every scenario
+- A replacement for the Arch Wiki
+
+## Why Arch?
+
+Arch Linux forces you to understand your system by building it piece by piece. Every component you install, every configuration file you edit, and every service you enable teaches you how modern Linux systems work.
+
+## Who This Is For
+
+Primarily myself—as a reference for future installations and a record of lessons learned. However, if you're also learning Arch Linux from scratch and want to see one person's documented journey, you might find this useful.
+
+## Structure
+
+The book follows my actual learning path:
+1. Manual installation (understanding the foundation)
+2. Desktop environment setup (as I configure it)
+3. Daily use configurations (as I discover them)
+4. Advanced topics (as I encounter and solve them)
+
+Chapters will be added and refined as I continue exploring Arch Linux on my journey toward setting up my new physical machine.
