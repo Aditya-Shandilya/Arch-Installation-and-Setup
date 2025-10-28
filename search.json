@@ -1,0 +1,162 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "",
+    "text": "1 Welcome\nThis is a personal documentation of my Arch Linux journey, from installation to daily use. Unlike comprehensive guides or tutorials, this book documents what I learn as I learn it.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#what-this-book-is",
+    "href": "index.html#what-this-book-is",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "1.1 What This Book Is",
+    "text": "1.1 What This Book Is\nA living document that grows with my understanding of Arch Linux. Each chapter represents a milestone in learning how Linux works at a fundamental level, starting from manual installation and building up to a fully customized system.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#what-this-book-is-not",
+    "href": "index.html#what-this-book-is-not",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "1.2 What This Book Is Not",
+    "text": "1.2 What This Book Is Not\n\nA complete reference manual\nA step-by-step tutorial for every scenario\nA replacement for the Arch Wiki",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#why-arch",
+    "href": "index.html#why-arch",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "1.3 Why Arch?",
+    "text": "1.3 Why Arch?\nArch Linux forces you to understand your system by building it piece by piece. Every component you install, every configuration file you edit, and every service you enable teaches you how modern Linux systems work.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#who-this-is-for",
+    "href": "index.html#who-this-is-for",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "1.4 Who This Is For",
+    "text": "1.4 Who This Is For\nPrimarily myself—as a reference for future installations and a record of lessons learned. However, if you’re also learning Arch Linux from scratch and want to see one person’s documented journey, you might find this useful.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#structure",
+    "href": "index.html#structure",
+    "title": "Arch Linux Installation and Setup Personal Guide",
+    "section": "1.5 Structure",
+    "text": "1.5 Structure\nThe book follows my actual learning path: 1. Manual installation (understanding the foundation) 2. Desktop environment setup (as I configure it) 3. Daily use configurations (as I discover them) 4. Advanced topics (as I encounter and solve them)\nChapters will be added and refined as I continue exploring Arch Linux on my journey toward setting up my new physical machine.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html",
+    "href": "content/minimal_install_intro.html",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "",
+    "text": "2.1 Introduction\nThis chapter documents a manual Arch Linux installation process. Unlike automated installers, this approach requires understanding each component of the system. The goal is to build knowledge incrementally, creating a foundation for deeper Linux expertise.\nThe installation follows the Arch philosophy: simplicity, user control, and transparency. By the end, you’ll have a minimal, command-line system ready for customization.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#pre-installation-checks",
+    "href": "content/minimal_install_intro.html#pre-installation-checks",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.2 Pre-Installation Checks",
+    "text": "2.2 Pre-Installation Checks\nBefore installing, verify that the live environment is configured correctly.\n\n2.2.1 Verify Boot Mode\nls /sys/firmware/efi/efivars\nWhat this does: Checks if the system booted in UEFI mode. If the directory exists and contains files, you’re in UEFI mode. This is important because the bootloader installation later depends on the boot mode.\nWhy it matters: Modern systems use UEFI instead of legacy BIOS. UEFI provides better security features and faster boot times. The presence of efivars confirms the firmware interface is accessible.\n\n\n2.2.2 Verify Network Connectivity\nping archlinux.org\nWhat this does: Sends network packets to verify internet connectivity. Press Ctrl+C to stop.\nWhy it matters: The installation requires downloading packages from remote repositories. The live environment typically configures networking automatically via DHCP, but it’s essential to verify before proceeding.\n\n\n2.2.3 Update System Clock\ntimedatectl set-ntp true\nWhat this does: Enables Network Time Protocol (NTP) synchronization, ensuring the system clock is accurate.\nWhy it matters: Accurate timestamps are crucial for package management, encryption, and system logs. Many security protocols depend on synchronized time.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#disk-partitioning-and-preparation",
+    "href": "content/minimal_install_intro.html#disk-partitioning-and-preparation",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.3 Disk Partitioning and Preparation",
+    "text": "2.3 Disk Partitioning and Preparation\nThis section creates the disk structure: an EFI partition for the bootloader, a swap partition for memory overflow, and a Btrfs partition for the root filesystem.\n\n2.3.1 Understanding the Layout\n\nEFI Partition (512MB): Stores bootloader files. Must be FAT32 format.\nSwap Partition (2GB): Acts as overflow when RAM is full. Size typically matches RAM for systems with ≤8GB.\nRoot Partition (Remaining): Contains the entire Linux system using Btrfs filesystem.\n\n\n\n2.3.2 Partition the Disk\ncfdisk /dev/sda\nWhat this does: Opens an interactive partition editor. The disk is typically /dev/sda in virtual machines.\nStep-by-step:\n\nSelect gpt when prompted. GPT (GUID Partition Table) is required for UEFI and supports disks larger than 2TB.\nCreate the EFI partition:\n\nSelect New → Enter 512M\nNavigate to Type → Select EFI System\n\nCreate the swap partition:\n\nSelect New → Enter 2G\nNavigate to Type → Select Linux swap\n\nCreate the root partition:\n\nSelect New → Press Enter (uses remaining space)\nType should default to Linux filesystem\n\nSelect Write → Type yes → Select Quit\n\nWhy these choices: GPT is modern and required for UEFI. The 512MB EFI partition provides ample space for multiple kernels. The 2GB swap allows basic memory management without wasting disk space.\n\n\n2.3.3 Format the Partitions\nFormatting creates filesystems on the raw partitions, making them usable by the operating system.\nmkfs.fat -F32 /dev/sda1         # EFI partition\nmkswap /dev/sda2                # Swap partition\nswapon /dev/sda2                # Activate swap\nmkfs.btrfs -L ArchRoot /dev/sda3  # Root partition\nWhat each command does:\n\nmkfs.fat -F32: Creates a FAT32 filesystem (required for EFI).\nmkswap: Prepares the partition for use as swap space.\nswapon: Activates swap immediately for the installation process.\nmkfs.btrfs -L ArchRoot: Creates a Btrfs filesystem with the label “ArchRoot”.\n\nWhy Btrfs: Btrfs offers advanced features like snapshots, compression, and subvolumes. Subvolumes allow separate management of different directory trees while sharing the same filesystem.\n\n\n2.3.4 Create and Mount Btrfs Subvolumes\nSubvolumes provide flexibility for snapshots and separate management of system components.\nmount /dev/sda3 /mnt\nWhat this does: Temporarily mounts the Btrfs partition to create subvolumes.\nbtrfs subvolume create /mnt/@\nbtrfs subvolume create /mnt/home\nbtrfs subvolume create /mnt/@pkg\nWhat this does: Creates three subvolumes:\n\n@: The root filesystem (follows Btrfs naming convention)\nhome: User home directories\n@pkg: Package cache at /var/cache/pacman/pkg\n\nWhy separate subvolumes: This allows independent snapshots of the root system without including user data or the package cache. You can restore the system without affecting personal files.\n\n\n2.3.5 Remount with Optimizations\numount /mnt\nmount -o compress=zstd,noatime,subvol=@ /dev/sda3 /mnt\nWhat this does: Unmounts the filesystem, then remounts the root subvolume with specific options.\nMount options explained:\n\ncompress=zstd: Enables transparent compression using Zstandard algorithm. Saves disk space and can improve performance on modern CPUs.\nnoatime: Disables recording file access times, reducing write operations and improving performance.\nsubvol=@: Mounts the root subvolume specifically.\n\n\n\n2.3.6 Mount Remaining Subvolumes and EFI\nmkdir -p /mnt/{boot/efi,home,var/cache/pacman/pkg}\nmount -o compress=zstd,noatime,subvol=home /dev/sda3 /mnt/home\nmount -o compress=zstd,noatime,subvol=@pkg /dev/sda3 /mnt/var/cache/pacman/pkg\nmount /dev/sda1 /mnt/boot/efi\nWhat this does:\n\nCreates necessary directories under /mnt\nMounts home subvolume to /mnt/home\nMounts @pkg subvolume to the pacman cache location\nMounts the EFI partition to /mnt/boot/efi\n\nVerification: Run lsblk to view the partition structure and confirm all mounts are correct.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#installing-the-base-system",
+    "href": "content/minimal_install_intro.html#installing-the-base-system",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.4 Installing the Base System",
+    "text": "2.4 Installing the Base System\n\n2.4.1 Configure Package Mirrors\nBefore installing packages, it’s beneficial to optimize the mirror list for faster downloads.\nvim /etc/pacman.d/mirrorlist\nWhat this file contains: A list of all available Arch Linux repository mirrors worldwide. The package manager (pacman) reads this file from top to bottom and uses the first working mirror it encounters.\nWhy mirror selection matters: Geographically closer mirrors typically provide faster download speeds, reducing installation time and improving future system updates.\n\n2.4.1.1 Understanding Mirror Geography\nThe mirrorlist contains mirrors from various locations globally:\n\nGermany (DE): de.arch.niran.jan.co, arch.phinau.de, berlin.mirror.pkgbuild.com\nUnited States (US): us.arch.mirror.constant.com, losangeles.mirror.pkgbuild.com\nSingapore: singapore.mirror.pkgbuild.com\nSouth Africa: johannesburg.mirror.pkgbuild.com\nEurope (General): mirror.xtom.ee, archlinux.tk-leaf.net\n\n\n\n2.4.1.2 Prioritizing Your Nearest Mirrors\nSteps to reorder mirrors:\n\nIn vim, navigate using arrow keys to locate mirrors closest to your location\nPosition your cursor on the line of your preferred mirror\nPress dd to cut (delete) the entire line\nMove to the top of the list (below the comment headers)\nPress p to paste the line\nRepeat for additional nearby mirrors to create a prioritized list\n\nExample for Germany: You would move these mirrors to the top:\nServer = https://de.arch.niran.jan.co/$repo/os/$arch\nServer = https://arch.phinau.de/$repo/os/$arch\nServer = https://berlin.mirror.pkgbuild.com/$repo/os/$arch\nVim commands reference:\nVim operates in different modes. Understanding this is key to using it effectively:\n\nNormal mode (default): For navigation and commands\n\nj: Move down one line\nk: Move up one line\nArrow keys: Also work for navigation (up, down, left, right)\ndd: Cut (delete) the current line\np: Paste below the cursor\n\nInsert mode: For typing text\n\ni: Enter insert mode (you’ll see -- INSERT -- at the bottom)\nIn insert mode, j and k type the letters ‘j’ and ‘k’ instead of moving\nArrow keys still work for navigation even in insert mode\n\nCommand mode: For saving and quitting\n\nESC: Return to normal mode from any other mode\n:wq: Write (save) and quit\n:q!: Quit without saving (if you make a mistake)\n\n\nQuick tip: If you’re unsure which mode you’re in, press ESC to return to normal mode.\nSaving and exiting:\n\nPress ESC to ensure you’re in normal mode\nType :wq and press Enter\n\nThis prioritization ensures faster downloads throughout the installation and for future system updates.\n\n\n\n2.4.2 Understanding pacstrap\nThe pacstrap script installs packages to a specified directory, creating the foundation of your Arch system.\npacstrap /mnt base linux linux-firmware vim\nWhat this installs:\n\nbase: Meta-package containing essential system utilities\nlinux: The Linux kernel\nlinux-firmware: Binary firmware files for common hardware\nvim: Text editor (you can substitute with nano if preferred)\n\nWhy these packages: The base package provides the bare minimum for a bootable system. The kernel is the operating system core. Firmware enables hardware like WiFi cards and graphics adapters. A text editor is essential for configuration.\n\n\n2.4.3 Generate fstab\ngenfstab -U /mnt &gt;&gt; /mnt/etc/fstab\nWhat this does: Creates the /etc/fstab file, which defines how partitions and subvolumes mount at boot.\nThe -U flag: Uses UUIDs (Universally Unique Identifiers) instead of device names. UUIDs remain consistent even if device naming changes, making the system more robust.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#system-configuration",
+    "href": "content/minimal_install_intro.html#system-configuration",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.5 System Configuration",
+    "text": "2.5 System Configuration\n\n2.5.1 Enter the New System\narch-chroot /mnt\nWhat this does: Changes root into the new installation. This means you’re now operating within the newly installed system rather than the live environment.\nWhy chroot: This allows you to configure the system as if you had booted into it. All commands now affect the installed system, not the live USB.\n\n\n2.5.2 Set Time Zone\nln -sf /usr/share/zoneinfo/Region/City /etc/localtime\nhwclock --systohc\nWhat this does:\n\nCreates a symbolic link from your timezone file to /etc/localtime\nGenerates /etc/adjtime based on the current system time\n\nExample: For New York: ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime\nWhy this matters: The timezone setting affects timestamps in logs, scheduled tasks, and user-facing time displays.\n\n\n2.5.3 Configure Localization\nLocales define language, character encoding, and regional formatting.\nvim /etc/locale.gen\nWhat to do: Uncomment your locale(s). Most users will uncomment en_US.UTF-8 UTF-8.\nUnderstanding UTF-8: UTF-8 is a character encoding that supports international characters. It’s the standard for modern Linux systems.\nlocale-gen\necho \"LANG=en_US.UTF-8\" &gt; /etc/locale.conf\nWhat this does:\n\nGenerates the locale files you uncommented\nSets the system-wide default locale\n\n\n\n2.5.4 Configure Networking\necho \"your-hostname\" &gt; /etc/hostname\nWhat this does: Sets your computer’s name on the network. Choose something memorable and unique.\npacman -S networkmanager\nsystemctl enable NetworkManager\nWhat this does:\n\nInstalls NetworkManager, a program that handles network connections\nEnables the service to start automatically at boot\n\nWhy NetworkManager: It provides automatic network configuration, WiFi management, and connection profiles. Essential for laptops and systems with multiple networks.\n\n\n2.5.5 Set Root Password\npasswd\nWhat this does: Sets the password for the root (administrator) account.\nSecurity note: Choose a strong password. Root access allows complete system control.\n\n\n2.5.6 Create User Account\nuseradd -mG wheel -s /bin/bash yourusername\npasswd yourusername\nWhat this does:\n\nCreates a new user with:\n\n-m: Creates a home directory\n-G wheel: Adds user to the wheel group (for sudo privileges)\n-s /bin/bash: Sets Bash as the default shell\n\nSets the user’s password\n\nWhy not use root: Running as root constantly is dangerous. A regular user account with sudo provides security while maintaining administrative capabilities.\n\n\n2.5.7 Configure sudo\npacman -S sudo\nvisudo\nWhat this does:\n\nInstalls sudo (allows users to run commands as root)\nOpens the sudoers configuration file safely\n\nIn visudo: Uncomment the line: %wheel ALL=(ALL) ALL\nWhat this means: Any user in the wheel group can run any command as any user by prefixing with sudo.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#bootloader-installation",
+    "href": "content/minimal_install_intro.html#bootloader-installation",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.6 Bootloader Installation",
+    "text": "2.6 Bootloader Installation\nThe bootloader is what starts your operating system when the computer powers on.\npacman -S grub efibootmgr\ngrub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB\ngrub-mkconfig -o /boot/grub/grub.cfg\nWhat each command does:\n\nInstalls GRUB (bootloader) and efibootmgr (manages EFI boot entries)\nInstalls GRUB to the EFI partition:\n\n--target=x86_64-efi: Specifies UEFI mode for 64-bit systems\n--efi-directory=/boot/efi: Location of the EFI partition\n--bootloader-id=GRUB: Name shown in the firmware boot menu\n\nGenerates GRUB configuration file (detects kernels and creates boot menu)\n\n\n2.6.1 VM Tools (Virtual Machine Only)\npacman -S open-vm-tools\nsystemctl enable vmtoolsd.service\nWhat this does: Installs VMware integration tools for better mouse handling, clipboard sharing, and display resolution.\nSkip this step if installing on physical hardware.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#completing-installation",
+    "href": "content/minimal_install_intro.html#completing-installation",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.7 Completing Installation",
+    "text": "2.7 Completing Installation\n\n2.7.1 Exit and Reboot\nexit\numount -R /mnt\nreboot\nWhat this does:\n\nExits the chroot environment\nRecursively unmounts all filesystems under /mnt\nReboots the system\n\nCritical: Before the system restarts, remove the installation ISO from your VM settings (or physical USB drive). The system should now boot from the hard disk.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#first-boot",
+    "href": "content/minimal_install_intro.html#first-boot",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.8 First Boot",
+    "text": "2.8 First Boot\nAfter rebooting, you’ll see a login prompt. Log in with your username and password.\nYou now have: A minimal, command-line Arch Linux system. No graphical interface yet—just a terminal.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#next-steps",
+    "href": "content/minimal_install_intro.html#next-steps",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.9 Next Steps",
+    "text": "2.9 Next Steps\nTo create a usable desktop environment, you’ll need to install:\n\nDisplay Server (xorg-server): Manages graphics output\nWindow Manager (e.g., i3, dwm): Controls window placement and behavior\nTerminal Emulator (e.g., alacritty): Provides terminal access in the GUI\nDisplay Manager (e.g., lightdm): Provides graphical login\n\nThese will be covered in subsequent chapters as you continue building your customized system.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/minimal_install_intro.html#key-takeaways",
+    "href": "content/minimal_install_intro.html#key-takeaways",
+    "title": "2  Manual Arch Linux Installation",
+    "section": "2.10 Key Takeaways",
+    "text": "2.10 Key Takeaways\n\nManual installation teaches system architecture by requiring interaction with each component\nBtrfs subvolumes enable flexible snapshot management\nProper partitioning separates bootloader, swap, and system data\nThe chroot environment allows system configuration before first boot\nStarting minimal allows you to understand each layer you add\n\nThis foundation provides complete control over your Linux system and prepares you for advanced customization.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  }
+]
