@@ -18,7 +18,7 @@ book:
 
   chapters:
     - index.qmd
-    - content/minimal_install_intro.qmd
+    - content/arch-installation.qmd
     
 format:
   html:
