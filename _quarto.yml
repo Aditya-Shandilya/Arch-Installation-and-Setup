@@ -19,6 +19,7 @@ book:
   chapters:
     - index.qmd
     - content/arch-installation.qmd
+    - content/graphical-environment.qmd
     
 format:
   html:
@@ -47,6 +48,6 @@ format:
 #   epub:
 #     theme: flatly
 #     output-file: arch_linux_installation_guide
-
+keep-md: true
 execute:
   freeze: auto
