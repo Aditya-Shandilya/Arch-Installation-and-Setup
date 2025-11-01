@@ -23,10 +23,13 @@ book:
     
 format:
   html:
-    theme: flatly
+    theme:
+      dark: darkly
+      light: flatly
     code-fold: true
     code-tools: true
     csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl"
+    respect-user-color-scheme: true
 #   pdf:
 #     documentclass: scrbook
 # #    lof: true
