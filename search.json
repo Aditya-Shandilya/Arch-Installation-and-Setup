@@ -60,8 +60,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html",
-    "href": "content/minimal_install_intro.html",
+    "objectID": "content/arch-installation.html",
+    "href": "content/arch-installation.html",
     "title": "2  Manual Arch Linux Installation",
     "section": "",
     "text": "2.1 Introduction\nThis chapter documents a manual Arch Linux installation process. Unlike automated installers, this approach requires understanding each component of the system. The goal is to build knowledge incrementally, creating a foundation for deeper Linux expertise.\nThe installation follows the Arch philosophy: simplicity, user control, and transparency. By the end, you’ll have a minimal, command-line system ready for customization.",
@@ -70,8 +70,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#pre-installation-checks",
-    "href": "content/minimal_install_intro.html#pre-installation-checks",
+    "objectID": "content/arch-installation.html#pre-installation-checks",
+    "href": "content/arch-installation.html#pre-installation-checks",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.2 Pre-Installation Checks",
     "text": "2.2 Pre-Installation Checks\nBefore installing, verify that the live environment is configured correctly.\n\n2.2.1 Verify Boot Mode\nls /sys/firmware/efi/efivars\nWhat this does: Checks if the system booted in UEFI mode. If the directory exists and contains files, you’re in UEFI mode. This is important because the bootloader installation later depends on the boot mode.\nWhy it matters: Modern systems use UEFI instead of legacy BIOS. UEFI provides better security features and faster boot times. The presence of efivars confirms the firmware interface is accessible.\n\n\n2.2.2 Verify Network Connectivity\nping archlinux.org\nWhat this does: Sends network packets to verify internet connectivity. Press Ctrl+C to stop.\nWhy it matters: The installation requires downloading packages from remote repositories. The live environment typically configures networking automatically via DHCP, but it’s essential to verify before proceeding.\n\n\n2.2.3 Update System Clock\ntimedatectl set-ntp true\nWhat this does: Enables Network Time Protocol (NTP) synchronization, ensuring the system clock is accurate.\nWhy it matters: Accurate timestamps are crucial for package management, encryption, and system logs. Many security protocols depend on synchronized time.",
@@ -80,8 +80,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#disk-partitioning-and-preparation",
-    "href": "content/minimal_install_intro.html#disk-partitioning-and-preparation",
+    "objectID": "content/arch-installation.html#disk-partitioning-and-preparation",
+    "href": "content/arch-installation.html#disk-partitioning-and-preparation",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.3 Disk Partitioning and Preparation",
     "text": "2.3 Disk Partitioning and Preparation\nThis section creates the disk structure: an EFI partition for the bootloader, a swap partition for memory overflow, and a Btrfs partition for the root filesystem.\n\n2.3.1 Understanding the Layout\n\nEFI Partition (512MB): Stores bootloader files. Must be FAT32 format.\nSwap Partition (2GB): Acts as overflow when RAM is full. Size typically matches RAM for systems with ≤8GB.\nRoot Partition (Remaining): Contains the entire Linux system using Btrfs filesystem.\n\n\n\n2.3.2 Partition the Disk\ncfdisk /dev/sda\nWhat this does: Opens an interactive partition editor. The disk is typically /dev/sda in virtual machines.\nStep-by-step:\n\nSelect gpt when prompted. GPT (GUID Partition Table) is required for UEFI and supports disks larger than 2TB.\nCreate the EFI partition:\n\nSelect New → Enter 512M\nNavigate to Type → Select EFI System\n\nCreate the swap partition:\n\nSelect New → Enter 2G\nNavigate to Type → Select Linux swap\n\nCreate the root partition:\n\nSelect New → Press Enter (uses remaining space)\nType should default to Linux filesystem\n\nSelect Write → Type yes → Select Quit\n\nWhy these choices: GPT is modern and required for UEFI. The 512MB EFI partition provides ample space for multiple kernels. The 2GB swap allows basic memory management without wasting disk space.\n\n\n2.3.3 Format the Partitions\nFormatting creates filesystems on the raw partitions, making them usable by the operating system.\nmkfs.fat -F32 /dev/sda1         # EFI partition\nmkswap /dev/sda2                # Swap partition\nswapon /dev/sda2                # Activate swap\nmkfs.btrfs -L ArchRoot /dev/sda3  # Root partition\nWhat each command does:\n\nmkfs.fat -F32: Creates a FAT32 filesystem (required for EFI).\nmkswap: Prepares the partition for use as swap space.\nswapon: Activates swap immediately for the installation process.\nmkfs.btrfs -L ArchRoot: Creates a Btrfs filesystem with the label “ArchRoot”.\n\nWhy Btrfs: Btrfs offers advanced features like snapshots, compression, and subvolumes. Subvolumes allow separate management of different directory trees while sharing the same filesystem.\n\n\n2.3.4 Create and Mount Btrfs Subvolumes\nSubvolumes provide flexibility for snapshots and separate management of system components.\nmount /dev/sda3 /mnt\nWhat this does: Temporarily mounts the Btrfs partition to create subvolumes.\nbtrfs subvolume create /mnt/@\nbtrfs subvolume create /mnt/home\nbtrfs subvolume create /mnt/@pkg\nWhat this does: Creates three subvolumes:\n\n@: The root filesystem (follows Btrfs naming convention)\nhome: User home directories\n@pkg: Package cache at /var/cache/pacman/pkg\n\nWhy separate subvolumes: This allows independent snapshots of the root system without including user data or the package cache. You can restore the system without affecting personal files.\n\n\n2.3.5 Remount with Optimizations\numount /mnt\nmount -o compress=zstd,noatime,subvol=@ /dev/sda3 /mnt\nWhat this does: Unmounts the filesystem, then remounts the root subvolume with specific options.\nMount options explained:\n\ncompress=zstd: Enables transparent compression using Zstandard algorithm. Saves disk space and can improve performance on modern CPUs.\nnoatime: Disables recording file access times, reducing write operations and improving performance.\nsubvol=@: Mounts the root subvolume specifically.\n\n\n\n2.3.6 Mount Remaining Subvolumes and EFI\nmkdir -p /mnt/{boot/efi,home,var/cache/pacman/pkg}\nmount -o compress=zstd,noatime,subvol=home /dev/sda3 /mnt/home\nmount -o compress=zstd,noatime,subvol=@pkg /dev/sda3 /mnt/var/cache/pacman/pkg\nmount /dev/sda1 /mnt/boot/efi\nWhat this does:\n\nCreates necessary directories under /mnt\nMounts home subvolume to /mnt/home\nMounts @pkg subvolume to the pacman cache location\nMounts the EFI partition to /mnt/boot/efi\n\nVerification: Run lsblk to view the partition structure and confirm all mounts are correct.",
@@ -90,8 +90,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#installing-the-base-system",
-    "href": "content/minimal_install_intro.html#installing-the-base-system",
+    "objectID": "content/arch-installation.html#installing-the-base-system",
+    "href": "content/arch-installation.html#installing-the-base-system",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.4 Installing the Base System",
     "text": "2.4 Installing the Base System\n\n2.4.1 Configure Package Mirrors\nBefore installing packages, it’s beneficial to optimize the mirror list for faster downloads.\nvim /etc/pacman.d/mirrorlist\nWhat this file contains: A list of all available Arch Linux repository mirrors worldwide. The package manager (pacman) reads this file from top to bottom and uses the first working mirror it encounters.\nWhy mirror selection matters: Geographically closer mirrors typically provide faster download speeds, reducing installation time and improving future system updates.\n\n2.4.1.1 Understanding Mirror Geography\nThe mirrorlist contains mirrors from various locations globally:\n\nGermany (DE): de.arch.niran.jan.co, arch.phinau.de, berlin.mirror.pkgbuild.com\nUnited States (US): us.arch.mirror.constant.com, losangeles.mirror.pkgbuild.com\nSingapore: singapore.mirror.pkgbuild.com\nSouth Africa: johannesburg.mirror.pkgbuild.com\nEurope (General): mirror.xtom.ee, archlinux.tk-leaf.net\n\n\n\n2.4.1.2 Prioritizing Your Nearest Mirrors\nSteps to reorder mirrors:\n\nIn vim, navigate using arrow keys to locate mirrors closest to your location\nPosition your cursor on the line of your preferred mirror\nPress dd to cut (delete) the entire line\nMove to the top of the list (below the comment headers)\nPress p to paste the line\nRepeat for additional nearby mirrors to create a prioritized list\n\nExample for Germany: You would move these mirrors to the top:\nServer = https://de.arch.niran.jan.co/$repo/os/$arch\nServer = https://arch.phinau.de/$repo/os/$arch\nServer = https://berlin.mirror.pkgbuild.com/$repo/os/$arch\nVim commands reference:\nVim operates in different modes. Understanding this is key to using it effectively:\n\nNormal mode (default): For navigation and commands\n\nj: Move down one line\nk: Move up one line\nArrow keys: Also work for navigation (up, down, left, right)\ndd: Cut (delete) the current line\np: Paste below the cursor\n\nInsert mode: For typing text\n\ni: Enter insert mode (you’ll see -- INSERT -- at the bottom)\nIn insert mode, j and k type the letters ‘j’ and ‘k’ instead of moving\nArrow keys still work for navigation even in insert mode\n\nCommand mode: For saving and quitting\n\nESC: Return to normal mode from any other mode\n:wq: Write (save) and quit\n:q!: Quit without saving (if you make a mistake)\n\n\nQuick tip: If you’re unsure which mode you’re in, press ESC to return to normal mode.\nSaving and exiting:\n\nPress ESC to ensure you’re in normal mode\nType :wq and press Enter\n\nThis prioritization ensures faster downloads throughout the installation and for future system updates.\n\n\n\n2.4.2 Understanding pacstrap\nThe pacstrap script installs packages to a specified directory, creating the foundation of your Arch system.\npacstrap /mnt base linux linux-firmware vim\nWhat this installs:\n\nbase: Meta-package containing essential system utilities\nlinux: The Linux kernel\nlinux-firmware: Binary firmware files for common hardware\nvim: Text editor (you can substitute with nano if preferred)\n\nWhy these packages: The base package provides the bare minimum for a bootable system. The kernel is the operating system core. Firmware enables hardware like WiFi cards and graphics adapters. A text editor is essential for configuration.\n\n\n2.4.3 Generate fstab\ngenfstab -U /mnt &gt;&gt; /mnt/etc/fstab\nWhat this does: Creates the /etc/fstab file, which defines how partitions and subvolumes mount at boot.\nThe -U flag: Uses UUIDs (Universally Unique Identifiers) instead of device names. UUIDs remain consistent even if device naming changes, making the system more robust.",
@@ -100,8 +100,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#system-configuration",
-    "href": "content/minimal_install_intro.html#system-configuration",
+    "objectID": "content/arch-installation.html#system-configuration",
+    "href": "content/arch-installation.html#system-configuration",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.5 System Configuration",
     "text": "2.5 System Configuration\n\n2.5.1 Enter the New System\narch-chroot /mnt\nWhat this does: Changes root into the new installation. This means you’re now operating within the newly installed system rather than the live environment.\nWhy chroot: This allows you to configure the system as if you had booted into it. All commands now affect the installed system, not the live USB.\n\n\n2.5.2 Set Time Zone\nln -sf /usr/share/zoneinfo/Region/City /etc/localtime\nhwclock --systohc\nWhat this does:\n\nCreates a symbolic link from your timezone file to /etc/localtime\nGenerates /etc/adjtime based on the current system time\n\nExample: For New York: ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime\nWhy this matters: The timezone setting affects timestamps in logs, scheduled tasks, and user-facing time displays.\n\n\n2.5.3 Configure Localization\nLocales define language, character encoding, and regional formatting.\nvim /etc/locale.gen\nWhat to do: Uncomment your locale(s). Most users will uncomment en_US.UTF-8 UTF-8.\nUnderstanding UTF-8: UTF-8 is a character encoding that supports international characters. It’s the standard for modern Linux systems.\nlocale-gen\necho \"LANG=en_US.UTF-8\" &gt; /etc/locale.conf\nWhat this does:\n\nGenerates the locale files you uncommented\nSets the system-wide default locale\n\n\n\n2.5.4 Configure Networking\necho \"your-hostname\" &gt; /etc/hostname\nWhat this does: Sets your computer’s name on the network. Choose something memorable and unique.\npacman -S networkmanager\nsystemctl enable NetworkManager\nWhat this does:\n\nInstalls NetworkManager, a program that handles network connections\nEnables the service to start automatically at boot\n\nWhy NetworkManager: It provides automatic network configuration, WiFi management, and connection profiles. Essential for laptops and systems with multiple networks.\n\n\n2.5.5 Set Root Password\npasswd\nWhat this does: Sets the password for the root (administrator) account.\nSecurity note: Choose a strong password. Root access allows complete system control.\n\n\n2.5.6 Create User Account\nuseradd -mG wheel -s /bin/bash yourusername\npasswd yourusername\nWhat this does:\n\nCreates a new user with:\n\n-m: Creates a home directory\n-G wheel: Adds user to the wheel group (for sudo privileges)\n-s /bin/bash: Sets Bash as the default shell\n\nSets the user’s password\n\nWhy not use root: Running as root constantly is dangerous. A regular user account with sudo provides security while maintaining administrative capabilities.\n\n\n2.5.7 Configure sudo\npacman -S sudo\nvisudo\nWhat this does:\n\nInstalls sudo (allows users to run commands as root)\nOpens the sudoers configuration file safely\n\nIn visudo: Uncomment the line: %wheel ALL=(ALL) ALL\nWhat this means: Any user in the wheel group can run any command as any user by prefixing with sudo.",
@@ -110,8 +110,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#bootloader-installation",
-    "href": "content/minimal_install_intro.html#bootloader-installation",
+    "objectID": "content/arch-installation.html#bootloader-installation",
+    "href": "content/arch-installation.html#bootloader-installation",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.6 Bootloader Installation",
     "text": "2.6 Bootloader Installation\nThe bootloader is what starts your operating system when the computer powers on.\npacman -S grub efibootmgr\ngrub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB\ngrub-mkconfig -o /boot/grub/grub.cfg\nWhat each command does:\n\nInstalls GRUB (bootloader) and efibootmgr (manages EFI boot entries)\nInstalls GRUB to the EFI partition:\n\n--target=x86_64-efi: Specifies UEFI mode for 64-bit systems\n--efi-directory=/boot/efi: Location of the EFI partition\n--bootloader-id=GRUB: Name shown in the firmware boot menu\n\nGenerates GRUB configuration file (detects kernels and creates boot menu)\n\n\n2.6.1 VM Tools (Virtual Machine Only)\npacman -S open-vm-tools\nsystemctl enable vmtoolsd.service\nWhat this does: Installs VMware integration tools for better mouse handling, clipboard sharing, and display resolution.\nSkip this step if installing on physical hardware.",
@@ -120,8 +120,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#completing-installation",
-    "href": "content/minimal_install_intro.html#completing-installation",
+    "objectID": "content/arch-installation.html#completing-installation",
+    "href": "content/arch-installation.html#completing-installation",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.7 Completing Installation",
     "text": "2.7 Completing Installation\n\n2.7.1 Exit and Reboot\nexit\numount -R /mnt\nreboot\nWhat this does:\n\nExits the chroot environment\nRecursively unmounts all filesystems under /mnt\nReboots the system\n\nCritical: Before the system restarts, remove the installation ISO from your VM settings (or physical USB drive). The system should now boot from the hard disk.",
@@ -130,8 +130,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#first-boot",
-    "href": "content/minimal_install_intro.html#first-boot",
+    "objectID": "content/arch-installation.html#first-boot",
+    "href": "content/arch-installation.html#first-boot",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.8 First Boot",
     "text": "2.8 First Boot\nAfter rebooting, you’ll see a login prompt. Log in with your username and password.\nYou now have: A minimal, command-line Arch Linux system. No graphical interface yet—just a terminal.",
@@ -140,8 +140,8 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#next-steps",
-    "href": "content/minimal_install_intro.html#next-steps",
+    "objectID": "content/arch-installation.html#next-steps",
+    "href": "content/arch-installation.html#next-steps",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.9 Next Steps",
     "text": "2.9 Next Steps\nTo create a usable desktop environment, you’ll need to install:\n\nDisplay Server (xorg-server): Manages graphics output\nWindow Manager (e.g., i3, dwm): Controls window placement and behavior\nTerminal Emulator (e.g., alacritty): Provides terminal access in the GUI\nDisplay Manager (e.g., lightdm): Provides graphical login\n\nThese will be covered in subsequent chapters as you continue building your customized system.",
@@ -150,13 +150,113 @@
     ]
   },
   {
-    "objectID": "content/minimal_install_intro.html#key-takeaways",
-    "href": "content/minimal_install_intro.html#key-takeaways",
+    "objectID": "content/arch-installation.html#key-takeaways",
+    "href": "content/arch-installation.html#key-takeaways",
     "title": "2  Manual Arch Linux Installation",
     "section": "2.10 Key Takeaways",
     "text": "2.10 Key Takeaways\n\nManual installation teaches system architecture by requiring interaction with each component\nBtrfs subvolumes enable flexible snapshot management\nProper partitioning separates bootloader, swap, and system data\nThe chroot environment allows system configuration before first boot\nStarting minimal allows you to understand each layer you add\n\nThis foundation provides complete control over your Linux system and prepares you for advanced customization.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Arch Linux Installation</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html",
+    "href": "content/graphical-environment.html",
+    "title": "3  Building the Graphical Environment",
+    "section": "",
+    "text": "3.1 Introduction\nAfter completing the base installation, you have a functional but text-only system. This chapter documents the transition from the command-line interface to a full graphical environment using AwesomeWM as the window manager.\nThis phase involves installing display servers, graphics drivers, and configuring the startup process. Each step builds toward a lightweight, customizable desktop experience.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#understanding-the-graphical-stack",
+    "href": "content/graphical-environment.html#understanding-the-graphical-stack",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.2 Understanding the Graphical Stack",
+    "text": "3.2 Understanding the Graphical Stack\nBefore diving into installation, it’s helpful to understand the components:\n\nWayland/Xwayland: Display protocols that manage how applications draw to the screen\nMesa: Open-source graphics drivers that enable GPU acceleration\nWindow Manager: Controls window placement, behavior, and appearance (AwesomeWM in this case)\nTerminal Emulator: Provides terminal access within the graphical environment",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#core-graphical-system-installation",
+    "href": "content/graphical-environment.html#core-graphical-system-installation",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.3 Core Graphical System Installation",
+    "text": "3.3 Core Graphical System Installation\n\n3.3.1 Installing Display Server and Drivers\nsudo pacman -S wayland wayland-protocols xorg-xwayland xorg-xlsclients mesa lib32-mesa vulkan-intel vulkan-radeon vulkan-mesa-layers\nWhat each package provides:\n\nwayland: Core Wayland display server protocol\nwayland-protocols: Additional protocol extensions for Wayland compositors\nxorg-xwayland: Compatibility layer allowing X11 applications to run on Wayland\nxorg-xlsclients: Utility to list X11 clients (useful for debugging)\nmesa: Open-source graphics drivers for Intel, AMD, and other GPUs\nlib32-mesa: 32-bit graphics libraries for compatibility with older applications\nvulkan-intel/vulkan-radeon/vulkan-mesa-layers: Modern graphics API support for better performance\n\nWhy these choices: This combination provides both Wayland (modern) and X11 (compatibility) support, ensuring maximum application compatibility while leveraging modern graphics features.\n\n\n3.3.2 Troubleshooting Common Installation Issues\nDuring installation, you may encounter errors. Here are solutions to common problems:\n\n3.3.2.1 Issue 1: Mirror Synchronization Errors\nSymptom: 404 Not Found errors when downloading packages from multiple mirrors.\nCause: The local package database is out of sync with the remote repositories. This happens when mirrors update their packages but your system still references old file locations.\nSolution - Reinitialize Package Keyring:\nsudo pacman-key --init\nsudo pacman-key --populate archlinux\nWhat this does:\n\n--init: Creates a new keyring with fresh entropy\n--populate archlinux: Adds Arch Linux’s official signing keys\n\nWhy it matters: Pacman verifies package integrity using GPG signatures. A corrupted or outdated keyring prevents package installation.\nSolution - Update Mirror List:\nsudo pacman -S reflector\nsudo reflector --country Germany --latest 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist\nWhat this does:\n\nInstalls reflector, a tool that generates optimal mirror lists\nFetches the 5 most recently synchronized German mirrors\nFilters for HTTPS-only mirrors (security)\nSorts by download speed\nSaves the result to /etc/pacman.d/mirrorlist\n\nWhy this works: Reflector pulls fresh mirror data from Arch’s master list, ensuring your system references currently active mirror URLs.\nAdjust for your location: Replace Germany with your country or nearby region for best results.\n\n\n3.3.2.2 Issue 2: Multilib Repository Error\nSymptom: error: target not found: lib32-mesa\nCause: The multilib repository is disabled by default. This repository contains 32-bit libraries needed for compatibility with older software.\nSolution - Enable Multilib Repository:\nsudo vim /etc/pacman.conf\nWhat to do: Find and uncomment these lines:\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\nWhy this repository exists: Modern 64-bit systems can run 32-bit applications (like some games, Wine, or Steam), but they require 32-bit libraries. The multilib repository provides these.\nSolution - Synchronize Package Database:\nsudo pacman -Syu\nWhat this does:\n\n-S: Sync with repositories\n-y: Refresh package database\n-u: Upgrade all packages\n\nWhy the full sync: This forces pacman to download the multilib database and update any packages that have newer versions available.\n\n\n\n3.3.3 Completing the Installation\nAfter resolving the synchronization and repository issues, retry the original installation command:\nsudo pacman -S wayland wayland-protocols xorg-xwayland xorg-xlsclients mesa lib32-mesa vulkan-intel vulkan-radeon vulkan-mesa-layers\nWhat should happen now:\n\nAll packages download successfully from the updated mirrors\nThe lib32-mesa package is found in the now-enabled multilib repository\nPackage integrity verification passes with the refreshed keyring\n\nSuccess indicator: The installation completes without errors, and all packages are installed and configured.\nThis step confirms that the troubleshooting process worked correctly and your system",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#window-manager-and-desktop-applications",
+    "href": "content/graphical-environment.html#window-manager-and-desktop-applications",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.4 Window Manager and Desktop Applications",
+    "text": "3.4 Window Manager and Desktop Applications\n\n3.4.1 Installing AwesomeWM and Essential Tools\nsudo pacman -S awesome alacritty feh git base-devel network-manager-applet firefox\nPackage purposes:\n\nawesome: A highly configurable tiling window manager written in Lua\nalacritty: GPU-accelerated terminal emulator (fast and modern)\nfeh: Lightweight image viewer, also used for setting wallpapers\ngit: Version control system (essential for dotfiles management)\nbase-devel: Meta-package containing build tools (gcc, make, etc.) needed for compiling AUR packages\nnetwork-manager-applet: System tray applet for managing WiFi and network connections\nfirefox: The web browser\n\nWhy AwesomeWM: It’s lightweight, extremely customizable via Lua scripts, and uses tiling by default, which maximizes screen space and keyboard-driven workflows.\n\n\n3.4.2 Handling Package Conflicts During Installation\nDuring installation, you may be prompted to choose between alternative packages:\nAudio System Choice:\n:: There are 2 providers available for jack:\n:: Repository extra\n   1) jack2  2) pipewire-jack\nRecommendation: Choose pipewire-jack (option 2)\nWhy: PipeWire is the modern Linux audio system that handles audio routing, Bluetooth audio, and screen sharing. It’s replacing older systems like PulseAudio and JACK2.\nFont Selection:\n:: There are 4 providers available for ttf-font:\n   1) noto-fonts  2) ttf-dejavu  3) ttf-liberation  4) gnu-free-fonts\nRecommendation: Choose noto-fonts (option 1)\nWhy: Noto fonts provide the most comprehensive Unicode coverage, ensuring proper rendering of international characters, symbols, and emojis.\nToolkit Libraries:\nThe installation will also pull in:\n\nqt5-base: Qt toolkit libraries (for Qt-based applications)\ngtk3 and gtk4: GTK toolkit libraries (for GTK-based applications)\n\nWhy both: Linux applications use either Qt or GTK. Installing both ensures compatibility with most desktop applications.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#configuring-the-session-startup",
+    "href": "content/graphical-environment.html#configuring-the-session-startup",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.5 Configuring the Session Startup",
+    "text": "3.5 Configuring the Session Startup\n\n3.5.1 Understanding .xinitrc\nThe ~/.xinitrc file controls what happens when you run startx to launch the graphical environment. It’s a shell script that runs before your window manager starts.\n\n\n3.5.2 Creating the Startup Configuration\nvim ~/.xinitrc\nRemove or comment out default content:\n# twm &\n# xclock -geometry 50x50-1+1 &\n# xterm -geometry 80x50+494+51 &\n# exec xterm -geometry 80x20+494-0 -name login\nWhy comment these out: These are legacy X11 programs from a default xinitrc template. They launch old window managers and terminals that you won’t use.\nAdd essential utilities:\nxsetroot -cursor_name left_ptr &\nnm-applet &\npicom &\nexec awesome\nWhat these commands do:\n\nxsetroot -cursor_name left_ptr &: Sets the default mouse cursor (without this, you’d see an ‘X’ cursor)\nnm-applet &: Launches the network manager system tray icon in the background\npicom &: Starts the compositor, enabling window transparency and shadow effects\nexec awesome: Starts the Awesome window manager session\n\nThe & symbol: Runs each command in the background, allowing the script to continue to the next line.\n\n\n\n\n\n\nNote\n\n\n\nexec must be the last command in the script, as it replaces the shell process.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#configuring-awesomewm",
+    "href": "content/graphical-environment.html#configuring-awesomewm",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.6 Configuring AwesomeWM",
+    "text": "3.6 Configuring AwesomeWM\n\n3.6.1 Copying the Default Configuration\nAwesomeWM stores its configuration in a Lua file that controls keybindings, appearance, and behavior.\nmkdir -p ~/.config/awesome\ncp /etc/xdg/awesome/rc.lua ~/.config/awesome/\nWhat this does:\n\nCreates the config directory if it doesn’t exist\nCopies the default configuration to your home directory\n\nWhy copy it: The default config in /etc/xdg/ is read-only and system-wide. Copying it to ~/.config/ allows personal customization without affecting other users or system updates.\n\n\n3.6.2 Critical Configuration Fix\nOpen the configuration file:\nvim ~/.config/awesome/rc.lua\nFind this line (usually near the top):\nterminal = \"xterm\"\nChange it to:\nterminal = \"alacritty\"\nWhy this fix is crucial: The default configuration assumes xterm is installed. Since we installed alacritty instead, the default keybinding (Mod + Enter) to open a terminal would fail without this change.\nSave and exit: Press ESC, then type :wq and press Enter.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#launching-the-graphical-environment",
+    "href": "content/graphical-environment.html#launching-the-graphical-environment",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.7 Launching the Graphical Environment",
+    "text": "3.7 Launching the Graphical Environment\n\n3.7.1 Starting the Session\nstartx\nWhat happens:\n\nThe X server starts\n~/.xinitrc executes\nBackground utilities launch (cursor, network applet)\nAwesomeWM takes over the display\n\nSuccess indicators:\n\nYou see the AwesomeWM desktop with a top panel\nThe network manager icon appears in the system tray\nPressing Mod + Enter (Mod is typically the Super/Windows key) opens Alacritty\n\n\n\n3.7.2 Basic AwesomeWM Navigation\nEssential keybindings:\n\nMod + Enter: Open terminal\nMod + R: Opens a prompt to run any command\nMod + S: Displays the built-in keybinding help popup\nMod + Shift + Q: Exit AwesomeWM\nMod + Shift + R: Restart AwesomeWM (reload configuration)\n\nWindow navigation:\n\nMod + J/K: Focus next/previous window\nMod + Shift + J/K: Move window up/down in stack\nMod + 1-9: Switch to workspace (tag) 1-9\n\nLayout control:\n\nMod + Space: Next layout\nMod + Shift + Space: Previous layout",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#common-post-installation-issues",
+    "href": "content/graphical-environment.html#common-post-installation-issues",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.8 Common Post-Installation Issues",
+    "text": "3.8 Common Post-Installation Issues\n\n3.8.1 Terminal Won’t Open\nProblem: Pressing Mod + Enter does nothing.\nSolution: Verify the terminal setting in ~/.config/awesome/rc.lua matches your installed terminal emulator.\n\n\n3.8.2 No Network Icon\nProblem: The network manager applet doesn’t appear.\nSolution: Ensure nm-applet & is in your ~/.xinitrc and NetworkManager service is running:\nsystemctl status NetworkManager\nIf not active:\nsudo systemctl start NetworkManager\n\n\n3.8.3 Black Screen After startx\nProblem: Screen turns black but nothing appears.\nSolution: Check for errors in the X server log:\ncat ~/.local/share/xorg/Xorg.0.log | grep EE\nCommon causes include missing drivers or configuration errors in .xinitrc.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#key-takeaways",
+    "href": "content/graphical-environment.html#key-takeaways",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.9 Key Takeaways",
+    "text": "3.9 Key Takeaways\n\nThe graphical stack requires display servers (Wayland/X11), drivers (Mesa), and a window manager\nPackage database synchronization is critical for successful installations\nThe multilib repository enables 32-bit compatibility on 64-bit systems\n.xinitrc controls the graphical session startup sequence\nAwesomeWM configuration must reference the correct terminal emulator\nTroubleshooting requires understanding component relationships",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
+    ]
+  },
+  {
+    "objectID": "content/graphical-environment.html#next-steps",
+    "href": "content/graphical-environment.html#next-steps",
+    "title": "3  Building the Graphical Environment",
+    "section": "3.10 Next Steps",
+    "text": "3.10 Next Steps\nWith a working graphical environment, you can now:\n\nCustomize AwesomeWM appearance and keybindings\nInstall additional applications (web browser, file manager, etc.)\nConfigure dotfiles with Git for reproducible setups\nExplore themes and status bar customizations\n\nThese topics will be covered as you continue refining your desktop environment.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Building the Graphical Environment</span>"
     ]
   }
 ]

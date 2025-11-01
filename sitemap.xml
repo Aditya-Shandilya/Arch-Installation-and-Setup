@@ -2,10 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://Aditya-Shandilya.github.io/Arch-Installation-and-Setup/index.html</loc>
-    <lastmod>2025-10-28T22:48:19.429Z</lastmod>
+    <lastmod>2025-11-01T15:16:54.573Z</lastmod>
   </url>
   <url>
-    <loc>https://Aditya-Shandilya.github.io/Arch-Installation-and-Setup/content/minimal_install_intro.html</loc>
-    <lastmod>2025-10-28T22:48:19.428Z</lastmod>
+    <loc>https://Aditya-Shandilya.github.io/Arch-Installation-and-Setup/content/arch-installation.html</loc>
+    <lastmod>2025-11-01T15:16:54.572Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Aditya-Shandilya.github.io/Arch-Installation-and-Setup/content/graphical-environment.html</loc>
+    <lastmod>2025-11-01T15:16:54.572Z</lastmod>
   </url>
 </urlset>
