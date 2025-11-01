@@ -48,6 +48,6 @@ format:
 #   epub:
 #     theme: flatly
 #     output-file: arch_linux_installation_guide
-keep-md: true
+# keep-md: true
 execute:
   freeze: auto
